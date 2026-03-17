@@ -1069,16 +1069,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     await async_start_discovery(hass)
     config = {**entry.data, **entry.options, "name": entry.title}
     try:
-        device = await hass.async_add_executor_job(setup_device, hass, config)
-        await device.async_refresh()
+        await hass.async_add_executor_job(setup_device, hass, config)
 
     except Exception as e:
         cleanup_failed_device(hass, device_id)
         raise ConfigEntryNotReady("tuya-local device not ready") from e
-
-    if not device.has_returned_state:
-        cleanup_failed_device(hass, device_id)
-        raise ConfigEntryNotReady("tuya-local device offline")
 
     device_conf = await hass.async_add_executor_job(
         get_config,
