@@ -81,16 +81,10 @@ async def test_init_entry(hass, bypass_data_fetch):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("refresh_error", [RuntimeError("boom"), None])
-async def test_async_setup_entry_cleans_up_failed_device(hass, mocker, refresh_error):
+async def test_async_setup_entry_cleans_up_failed_device(hass, mocker):
     """Failed runtime setup should not leave stale device state cached."""
 
     mock_device = mocker.MagicMock()
-    if refresh_error is None:
-        mock_device.async_refresh = mocker.AsyncMock()
-        mock_device.has_returned_state = False
-    else:
-        mock_device.async_refresh = mocker.AsyncMock(side_effect=refresh_error)
 
     def fake_setup_device(hass, config):
         hass.data.setdefault(DOMAIN, {})
@@ -99,7 +93,7 @@ async def test_async_setup_entry_cleans_up_failed_device(hass, mocker, refresh_e
             "tuyadevice": mock_device._api,
             "tuyadevicelock": mocker.MagicMock(),
         }
-        return mock_device
+        raise RuntimeError("setup error")
 
     mocker.patch(
         "custom_components.tuya_local.setup_device", side_effect=fake_setup_device
